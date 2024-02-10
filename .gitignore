@@ -1,0 +1,14 @@
+output_srt
+*.mp4
+*.mkv
+*.srt
+
+# enviournemnt
+.env
+.env.local
+.env.development
+
+
+# python env
+__pycache__
+
