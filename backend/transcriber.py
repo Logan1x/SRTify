@@ -19,3 +19,22 @@ def transcribe_audio(path, output_dir="/content"):
             segmentText = f"{segmentId}\n{startTime} --> {endTime}\n{text[1:] if text.startswith(' ') else text}\n\n"
             srtFile.write(segmentText)
     return srtFilename
+
+
+def merge_video_srt(video_path, srt_path, output_dir):
+    output_video_path = os.path.join(
+        output_dir,
+        os.path.splitext(os.path.basename(video_path))[0] + "_with_captions.mp4",
+    )
+    ffmpeg_command = [
+        "ffmpeg",
+        "-i",
+        video_path,
+        "-vf",
+        f"subtitles={srt_path}",
+        "-c:a",
+        "copy",
+        output_video_path,
+    ]
+    subprocess.run(ffmpeg_command, capture_output=True)
+    return output_video_path

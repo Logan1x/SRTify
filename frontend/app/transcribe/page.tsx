@@ -2,14 +2,15 @@
 
 import axios from "axios";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useStore } from "../../store";
 
-// Define a type for the video file state
 type VideoFile = File | null;
 
-const Upload: React.FC = () => {
-  // State to hold the selected video file
+const Transcribe: React.FC = () => {
   const [videoFile, setVideoFile] = useState<VideoFile>(null);
-  const [receivedVideoUrl, setReceivedVideoUrl] = useState<string>("");
+  const router = useRouter();
+  const { updateSubs } = useStore();
 
   // Handle file selection
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,7 +19,6 @@ const Upload: React.FC = () => {
     setVideoFile(file);
   };
 
-  // Optional: Function to handle file upload submission
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!videoFile) {
@@ -26,30 +26,26 @@ const Upload: React.FC = () => {
       return;
     }
 
-    // Implement the actual upload logic here
-    // This could involve setting up FormData and using fetch/axios to send the file to your server
     console.log("Uploading:", videoFile.name);
-    // Example:
-    // const formData = new FormData();
-    // formData.append("video", videoFile);
-    // await fetch("YOUR_UPLOAD_ENDPOINT", { method: "POST", body: formData });
 
     const formData = new FormData();
     formData.append("video", videoFile);
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/process-video/",
+        "http://127.0.0.1:8000/transcribe/",
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-          responseType: "blob",
+          // responseType: "text/plain",
         }
       );
-      console.log(response.data); // Get the binary data as a blob
-      setReceivedVideoUrl(URL.createObjectURL(response.data));
+      console.log(response.data);
+      updateSubs(response.data);
+
+      router.push("/editor");
     } catch (error) {
       console.error("Error uploading file: ", error);
     }
@@ -79,14 +75,8 @@ const Upload: React.FC = () => {
           Upload
         </button>
       </form>
-
-      {receivedVideoUrl && (
-        <div>
-          <video src={receivedVideoUrl} width="100%" controls></video>
-        </div>
-      )}
     </div>
   );
 };
 
-export default Upload;
+export default Transcribe;
