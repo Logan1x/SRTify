@@ -33,11 +33,24 @@ const Transcribe: React.FC = () => {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/transcribe/",
+        "http://127.0.0.1:8000/transcription/",
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (progressEvent) => {
+            const progress = Math.round(
+              (progressEvent.loaded / progressEvent.total) * 100
+            );
+            const intervals = [10, 20, 50, 70, 100]; // Define the progress intervals you want
+            for (let i = intervals.length - 1; i >= 0; i--) {
+              if (progress >= intervals[i]) {
+                console.log(`Upload Progress: ${intervals[i]}%`);
+                // You can update a progress bar or do other actions based on the progress
+                break; // Exit the loop once the highest interval is reached
+              }
+            }
           },
           // responseType: "text/plain",
         }
