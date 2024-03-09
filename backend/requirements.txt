@@ -1,5 +1,5 @@
-pymongo=latest
-uvicorn=latest
-fastapi=latest
-fastapi-multipart=latest  #not sure
-
+uvicorn
+fastapi
+fastapi-multipart #not sure
+supabase
+python-dotenv

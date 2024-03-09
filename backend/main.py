@@ -2,19 +2,24 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from transcriber import transcribe_audio, merge_video_srt
+from pymongo import MongoClient
 import os
 import subprocess
+from datetime import datetime
+from dotenv import load_dotenv
+from pydantic import BaseModel
 
-from pymongo import MongoClient
+load_dotenv()
 
 
 app = FastAPI()
 
+from supabase import create_client, Client
 
-# mongo db connection
-client = MongoClient("mongodb://localhost:27017/")
-db = client["srtify"]
-videos = db["videos"]
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(url, key)
+
 
 # Define a list of origins that should be permitted to make cross-origin requests
 # You can use "*" to allow all origins
@@ -33,6 +38,11 @@ app.add_middleware(
 )
 
 
+# define a model for the transcription update request
+class TranscriptionUpdate(BaseModel):
+    srt_content: str
+
+
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the Whisper Transcriber API!"}
@@ -41,6 +51,15 @@ async def read_root():
 @app.get("/ping/")
 async def ping():
     return {"message": "pong!"}
+
+
+@app.get("/transcription/")
+async def get_transcriptions():
+    try:
+        videos = supabase.table("videos").select("*").execute()
+        return videos
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @app.post("/process-video/")
@@ -74,36 +93,83 @@ async def process_video(video: UploadFile = File(...)):
     )
 
 
-@app.post("/transcribe/")
+@app.post("/transcription/")
 async def transcribe_audio_from_video(video: UploadFile = File(...)):
-    # Save uploaded video to a temporary file
-    temp_video_path = f"temp/{video.filename}"
-    with open(temp_video_path, "wb") as buffer:
-        content = await video.read()
-        buffer.write(content)
+    try: 
+        # Save uploaded video to a temporary file
+        temp_dir = "temp"
+        os.makedirs(temp_dir, exist_ok=True)
 
-    # Ensure the output directory exists
-    output_dir = "output_srt"
-    os.makedirs(output_dir, exist_ok=True)
+        temp_video_path = f"temp/{video.filename}"
+        with open(temp_video_path, "wb") as buffer:
+            content = await video.read()
+            buffer.write(content)
 
-    # give resp at this stage
-    video_id = videos.insert_one(
-        {"video_name": video.filename, "status": "processing"}
-    ).inserted_id
+        # Insert the video into the database
+        data, count = supabase.table('videos').insert({ "title": video.filename, "is_ready": False}).execute()
 
-    # Use the transcribe function
-    srt_file_path = transcribe_audio(temp_video_path, output_dir)
+        # Destructuring data tuple to extract id
+        (_, [video_data]) = data
+        video_id = video_data['id']
 
-    # Cleanup: Remove the temporary video file after processing
-    os.remove(temp_video_path)
+        # Use the transcribe function
+        srt_content = transcribe_audio(temp_video_path)
 
-    videos.update_one(
-        {"_id": video_id}, {"$set": {"srt_content": srt_file_path, "status": "done"}}
-    )
+        # Cleanup: Remove the temporary video file after processing
+        os.remove(temp_video_path)
+        
+        updated_data, count = supabase.table('videos').update({'is_ready': True, 'subs': srt_content, 'updated_at': datetime.now().isoformat()}).eq('id', video_id).execute()
 
-    # Return the SRT file as a response
-    return FileResponse(
-        path=srt_file_path,
-        filename=os.path.basename(srt_file_path),
-        media_type="text/srt",
-    )
+        # Return the SRT file as a response
+        return {
+            "video_id": updated_data[1][0]["id"],
+            "srt_content": srt_content,
+            "created_at": updated_data[1][0]["created_at"],
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/transcription-bg/")
+async def transcribe_audio_from_video(video: UploadFile = File(...), background_tasks: BackgroundTasks):
+    try:         # Save uploaded video to a temporary file
+        temp_dir = "temp"
+        os.makedirs(temp_dir, exist_ok=True)
+
+        temp_video_path = f"temp/{video.filename}"
+        with open(temp_video_path, "wb") as buffer:
+            content = await video.read()
+            buffer.write(content)
+
+        # Insert the video into the database
+        data, count = supabase.table('videos').insert({ "title": video.filename, "is_ready": False}).execute()
+
+        # Destructuring data tuple to extract id
+        (_, [video_data]) = data
+        video_id = video_data['id']
+
+        # Use the transcribe function
+        srt_content = transcribe_audio(temp_video_path)
+
+        # Cleanup: Remove the temporary video file after processing
+        os.remove(temp_video_path)
+
+        updated_data, count = supabase.table('videos').update({'is_ready': True, 'subs': srt_content, 'updated_at': datetime.now().isoformat()}).eq('id', video_id).execute()
+
+        # Return response immediately
+        return {
+            "video_id": updated_data[1][0]["id"],
+            "srt_content": srt_content,
+            "created_at": updated_data[1][0]["created_at"],
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.put("/transcription/{video_id}/")
+async def update_transcription(video_id: str, transcription_update: TranscriptionUpdate):
+    try:
+        srt_content = transcription_update.srt_content
+        updated_data, count = supabase.table('videos').update({'subs': srt_content, 'updated_at': datetime.now().isoformat()}).eq('id', video_id).execute()
+        return updated_data
+    except Exception as e:
+        return {"error": str(e)}
