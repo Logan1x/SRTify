@@ -40,7 +40,7 @@ app.add_middleware(
 
 # define a model for the transcription update request
 class TranscriptionUpdate(BaseModel):
-    srt_content: str
+    subs: str
 
 
 @app.get("/")
@@ -56,7 +56,12 @@ async def ping():
 @app.get("/transcription/")
 async def get_transcriptions():
     try:
-        videos = supabase.table("videos").select("*").execute()
+        videos = (
+            supabase.table("videos")
+            .select("*")
+            .order("updated_at", desc=True)
+            .execute()
+        )
         return videos
     except Exception as e:
         return {"error": str(e)}
@@ -126,7 +131,7 @@ async def update_transcription(
     video_id: str, transcription_update: TranscriptionUpdate
 ):
     try:
-        srt_content = transcription_update.srt_content
+        srt_content = transcription_update.subs
         updated_data, count = (
             supabase.table("videos")
             .update({"subs": srt_content, "updated_at": datetime.now().isoformat()})

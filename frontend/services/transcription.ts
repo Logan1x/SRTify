@@ -14,7 +14,7 @@ export const axGetTranscription = async (videoId: string) => {
 export const axGetAllTranscriptions = async () => {
   try {
     const response = await axios.get(
-      `${process.env.BACKEND_URL}/transcription/`
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/transcription/`
     );
     return response.data;
   } catch (e) {
@@ -49,12 +49,14 @@ export const axVideoToTranscription = async (
 
 export const axUpdateTranscription = async (
   videoId: string,
-  data: { subtitles: string }
+  subs: string | null
 ) => {
   try {
     const response = await axios.put(
-      `${process.env.BACKEND_URL}/transcription/${videoId}/`,
-      data
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/transcription/${videoId}/`,
+      {
+        subs: subs,
+      }
     );
     return response.data;
   } catch (e) {
