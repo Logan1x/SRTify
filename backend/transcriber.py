@@ -10,14 +10,13 @@ def transcribe_audio(path):
     srtContent = ""
 
     for segment in segments:
-            startTime = str(0) + str(timedelta(seconds=int(segment["start"]))) + ",000"
-            endTime = str(0) + str(timedelta(seconds=int(segment["end"]))) + ",000"
-            text = segment["text"]
-            segmentId = segment["id"] + 1
-            segmentText = f"{segmentId}\n{startTime} --> {endTime}\n{text[1:] if text.startswith(' ') else text}\n\n"
-            srtContent += segmentText
+        startTime = str(0) + str(timedelta(seconds=int(segment["start"]))) + ",000"
+        endTime = str(0) + str(timedelta(seconds=int(segment["end"]))) + ",000"
+        text = segment["text"]
+        segmentId = segment["id"] + 1
+        segmentText = f"{segmentId}\n{startTime} --> {endTime}\n{text[1:] if text.startswith(' ') else text}\n\n"
+        srtContent += segmentText
     return srtContent
-
 
 
 def merge_video_srt(video_path, srt_path, output_dir):

@@ -12,8 +12,7 @@
     "axios": "^1.6.7",
     "next": "14.1.0",
     "react": "^18",
-    "react-dom": "^18",
-    "zustand": "^4.5.2"
+    "react-dom": "^18"
   },
   "devDependencies": {
     "@types/node": "^20",
