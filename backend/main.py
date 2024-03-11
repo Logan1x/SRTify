@@ -1,24 +1,16 @@
-from fastapi import FastAPI, File, UploadFile, Response
+from fastapi import FastAPI, File, UploadFile, Response, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from transcriber import transcribe_audio, merge_video_srt
+from transcriber import transcribe_audio
 from pymongo import MongoClient
 import os
 import subprocess
 from datetime import datetime
-from dotenv import load_dotenv
 from pydantic import BaseModel
-
-load_dotenv()
+from config.supabase import supabase
 
 
 app = FastAPI()
-
-from supabase import create_client, Client
-
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
 
 
 # Define a list of origins that should be permitted to make cross-origin requests
@@ -77,7 +69,9 @@ async def get_transcription(video_id: str):
 
 
 @app.post("/transcription/")
-async def transcribe_audio_from_video(video: UploadFile = File(...)):
+async def transcribe_audio_from_video(
+    background_tasks: BackgroundTasks, video: UploadFile = File(...)
+):
     try:
         # Save uploaded video to a temporary file
         temp_dir = "temp"
@@ -91,7 +85,14 @@ async def transcribe_audio_from_video(video: UploadFile = File(...)):
         # Insert the video into the database
         data, count = (
             supabase.table("videos")
-            .insert({"title": video.filename, "is_ready": False})
+            .insert(
+                {
+                    "title": video.filename,
+                    "is_ready": False,
+                    "created_at": datetime.now().isoformat(),
+                    "updated_at": datetime.now().isoformat(),
+                }
+            )
             .execute()
         )
 
@@ -100,28 +101,12 @@ async def transcribe_audio_from_video(video: UploadFile = File(...)):
         video_id = video_data["id"]
 
         # Use the transcribe function
-        srt_content = transcribe_audio(temp_video_path)
-
-        # Cleanup: Remove the temporary video file after processing
-        os.remove(temp_video_path)
-
-        updated_data, count = (
-            supabase.table("videos")
-            .update(
-                {
-                    "is_ready": True,
-                    "subs": srt_content,
-                    "updated_at": datetime.now().isoformat(),
-                }
-            )
-            .eq("id", video_id)
-            .execute()
+        srt_content = background_tasks.add_task(
+            transcribe_audio, temp_video_path, video_id
         )
 
         # Return the SRT file as a response
-        return {
-            "video_id": updated_data[1][0]["id"],
-        }
+        return {"video_id": video_id}
     except Exception as e:
         return {"error": str(e)}
 
