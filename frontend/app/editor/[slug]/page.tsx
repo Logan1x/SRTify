@@ -9,6 +9,11 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 export default function Editor({ params }: { params: { slug: string } }) {
   const { slug } = params;
@@ -58,57 +63,71 @@ export default function Editor({ params }: { params: { slug: string } }) {
   };
 
   const ButtonGroup: React.FC = ({ children }) => {
-    return <div className="flex gap-2 items-center">{children}</div>;
+    return <div className="flex gap-2 items-center mt-4">{children}</div>;
   };
 
   return (
-    <section className="flex w-full">
-      <div className="flex flex-col w-3/5">
-        <h1 className="text-3xl text-center font-semibold mb-4">
-          Edit Subtitles
-        </h1>
-        {isLoading ? (
-          <p className="text-center">Loading...</p>
-        ) : isProcessing ? (
-          <div className="flex items-center justify-center">
-            <Alert variant={"warn"} className="w-fit flex gap-2">
-              <div className="text-amber-600">
-                <ExclamationTriangleIcon />
-              </div>
-              <div className="flex flex-col">
-                <AlertTitle>Still Processing!</AlertTitle>
-                <AlertDescription>
-                  Your video is still processing, come back to same link later.
-                </AlertDescription>
-              </div>
-            </Alert>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col items-center ">
-            <textarea
-              name=""
-              id=""
-              value={subtitles || ""}
-              onChange={(e) => setSubtitles(e.target.value)}
-              className="w-4/5 h-96 p-4 m-6 border-2 border-gray-300 rounded-md bg-muted"
-            ></textarea>
-            <ButtonGroup>
-              <Button type="submit">Update Subtitles</Button>
-              <Button type="button" onClick={handleDownload} variant="outline">
-                Download Subtitles
-              </Button>
-            </ButtonGroup>
-          </form>
-        )}
-      </div>
-      <div className="flex flex-col w-2/5 items-center">
-        <h1 className="text-3xl text-center font-semibold mb-4">
-          Preview Subtitles
-        </h1>
-        <div className="w-4/5 h-96 p-4 m-6 border-2 border-gray-300 rounded-md bg-muted">
-          {subtitles}
+    <>
+      {isLoading ? (
+        <p className="text-center">Loading...</p>
+      ) : isProcessing ? (
+        <div className="flex items-center justify-center">
+          <Alert variant={"warn"} className="w-fit flex gap-2">
+            <div className="text-amber-600">
+              <ExclamationTriangleIcon />
+            </div>
+            <div className="flex flex-col">
+              <AlertTitle>Still Processing!</AlertTitle>
+              <AlertDescription>
+                Your video is still processing, come back to same link later.
+              </AlertDescription>
+            </div>
+          </Alert>
         </div>
-      </div>
-    </section>
+      ) : (
+        <ResizablePanelGroup direction="horizontal">
+          <ResizablePanel className="w-3/5">
+            <div className="flex flex-col p-4">
+              <h1 className="text-3xl text-center font-semibold m-4">
+                Edit Subtitles
+              </h1>
+              <form
+                onSubmit={handleSubmit}
+                className="flex flex-col items-center px-4 w-full gap-4"
+              >
+                <textarea
+                  name=""
+                  id=""
+                  value={subtitles || ""}
+                  onChange={(e) => setSubtitles(e.target.value)}
+                  className="w-full h-96 p-2 border-2 border-gray-300 dark:border-0 rounded-md bg-muted"
+                ></textarea>
+                <ButtonGroup>
+                  <Button type="submit">Update Subtitles</Button>
+                  <Button
+                    type="button"
+                    onClick={handleDownload}
+                    variant="outline"
+                  >
+                    Download Subtitles
+                  </Button>
+                </ButtonGroup>
+              </form>
+            </div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel className="w-2/5">
+            <div className="flex flex-col  items-center p-4">
+              <h1 className="text-3xl text-center font-semibold m-4">
+                Preview Subtitles
+              </h1>
+              <div className=" h-96 p-2 border-2 border-gray-300 dark:border-0 rounded-md bg-muted text-ellipsis overflow-hidden">
+                {subtitles}
+              </div>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      )}
+    </>
   );
 }
