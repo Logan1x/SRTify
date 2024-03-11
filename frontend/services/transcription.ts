@@ -40,7 +40,6 @@ export const axVideoToTranscription = async (
         onUploadProgress: onUploadProgressCallback,
       }
     );
-    console.log("response inside: ", response);
     return response.data;
   } catch (e) {
     console.log(e);

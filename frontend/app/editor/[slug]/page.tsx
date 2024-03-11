@@ -5,7 +5,7 @@ import {
   axGetTranscription,
   axUpdateTranscription,
 } from "@/services/transcription";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
@@ -14,12 +14,15 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import Link from "next/link";
+import ReactPlayer from "react-player";
 
 export default function Editor({ params }: { params: { slug: string } }) {
   const { slug } = params;
   const [subtitles, setSubtitles] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [url, setUrl] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -66,13 +69,19 @@ export default function Editor({ params }: { params: { slug: string } }) {
     return <div className="flex gap-2 items-center mt-4">{children}</div>;
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    const url = URL.createObjectURL(file);
+    setUrl(url);
+  };
+
   return (
     <>
       {isLoading ? (
         <p className="text-center">Loading...</p>
       ) : isProcessing ? (
-        <div className="flex items-center justify-center">
-          <Alert variant={"warn"} className="w-fit flex gap-2">
+        <div className="flex flex-col items-center justify-center mt-6">
+          <Alert variant={"warn"} className="w-max flex gap-2">
             <div className="text-amber-600">
               <ExclamationTriangleIcon />
             </div>
@@ -83,6 +92,14 @@ export default function Editor({ params }: { params: { slug: string } }) {
               </AlertDescription>
             </div>
           </Alert>
+          <div className="flex gap-2 items-center mt-4">
+            <Button variant={"outline"}>
+              <a href={`/editor/${slug}`}>Refresh</a>
+            </Button>
+            <Button>
+              <Link href={`/dashboard`}>Go to Dashboard</Link>
+            </Button>
+          </div>
         </div>
       ) : (
         <ResizablePanelGroup direction="horizontal">
@@ -100,7 +117,7 @@ export default function Editor({ params }: { params: { slug: string } }) {
                   id=""
                   value={subtitles || ""}
                   onChange={(e) => setSubtitles(e.target.value)}
-                  className="w-full h-96 p-2 border-2 border-gray-300 dark:border-0 rounded-md bg-muted"
+                  className="w-full h-96 p-4 border-2 border-gray-300 dark:border-0 rounded-md bg-muted"
                 ></textarea>
                 <ButtonGroup>
                   <Button type="submit">Update Subtitles</Button>
@@ -121,9 +138,32 @@ export default function Editor({ params }: { params: { slug: string } }) {
               <h1 className="text-3xl text-center font-semibold m-4">
                 Preview Subtitles
               </h1>
-              <div className=" h-96 p-2 border-2 border-gray-300 dark:border-0 rounded-md bg-muted text-ellipsis overflow-hidden">
-                {subtitles}
-              </div>
+              <input type="file" accept="video/*" onChange={handleFileChange} />
+              {url && (
+                <div className="m-4 p-4">
+                  <ReactPlayer
+                    url={url}
+                    controls
+                    config={{
+                      file: {
+                        tracks: [
+                          {
+                            kind: "subtitles",
+                            src: subtitles
+                              ? URL.createObjectURL(
+                                  new Blob([subtitles], { type: "text/vtt" })
+                                )
+                              : "",
+                            srcLang: "hi",
+                            label: "Hindi",
+                            mode: "showing",
+                          },
+                        ],
+                      },
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>

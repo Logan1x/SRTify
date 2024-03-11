@@ -41,7 +41,7 @@ const Transcribe: React.FC = () => {
       );
       setIsLoading(false);
       if (videoId) {
-        router.push(`/editor/${videoId}`);
+        router.push(`/dashboard`);
       } else {
         alert("Error processing file. Please try again.");
       }

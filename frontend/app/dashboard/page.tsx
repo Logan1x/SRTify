@@ -28,7 +28,7 @@ function Dashboard() {
     fetchAllSubtitles();
   }, []);
 
-  const toLocaleString = (isoDateString: Date) => {
+  const toLocaleString = (isoDateString: string) => {
     const date = new Date(isoDateString);
     return date.toLocaleString();
   };
@@ -74,15 +74,15 @@ function Dashboard() {
               {subtitles?.map((sub) => (
                 <TableRow key={sub?.id}>
                   <TableCell>
-                    <div className="flex gap-2 items-center">
-                      <Link
-                        href={`/editor/${sub?.id}`}
-                        className="hover:text-primary"
-                      >
+                    <Link
+                      href={`/editor/${sub?.id}`}
+                      className="hover:text-primary flex gap-1 items-center"
+                    >
+                      <span>
                         <ExternalLinkIcon />
-                      </Link>
+                      </span>
                       {sub?.title}
-                    </div>
+                    </Link>
                   </TableCell>
                   <TableCell>
                     {sub?.is_ready ? (

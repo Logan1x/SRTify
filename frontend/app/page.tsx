@@ -10,7 +10,7 @@ export default function Home() {
       <p className="text-lg text-center text-slate-500">
         Create SRT files for your videos.
       </p>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 mt-4">
         <Link
           href={"/dashboard"}
           className={buttonVariants({ variant: "outline" })}

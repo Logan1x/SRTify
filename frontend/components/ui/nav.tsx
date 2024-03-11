@@ -2,19 +2,18 @@
 
 import React from "react";
 import { ModeToggle } from "./theme-toggle";
-import { Button, buttonVariants } from "./button";
+import { buttonVariants } from "./button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 function Nav() {
   const currentRoute = usePathname();
-  console.log(currentRoute);
   return (
     <nav className="flex items-center justify-between p-4 border-b-2 border-muted">
       <div className="flex items-center space-x-4">
-        <a href="/" className="font-bold">
+        <Link href="/" className="font-bold text-xl">
           SRTIFY
-        </a>
+        </Link>
       </div>
       <div className="flex items-center gap-2">
         {currentRoute === "/dashboard" ? (
