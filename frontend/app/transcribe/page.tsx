@@ -1,9 +1,21 @@
 "use client";
 
-import axios from "axios";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { axVideoToTranscription } from "@/services/transcription";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { motion } from "framer-motion";
 
 type VideoFile = File | null;
 
@@ -11,19 +23,26 @@ const Transcribe: React.FC = () => {
   const [videoFile, setVideoFile] = useState<VideoFile>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [progressMessage, setProgressMessage] = useState("");
+  const [selectedModel, setSelectedModel] = React.useState("base");
   const router = useRouter();
+  const { toast } = useToast();
+
+  const variants = {
+    hidden: { opacity: 0, scale: 0.6 },
+    show: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        ease: "easeInOut",
+      },
+    },
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Check if files are selected and set the first file
     const file = event.target.files ? event.target.files[0] : null;
     setVideoFile(file);
-  };
-
-  const onUploadProgress = (progressEvent: ProgressEvent) => {
-    const progress = Math.round(
-      (progressEvent.loaded / (progressEvent.total ?? 0)) * 100
-    );
-    progress === 100 && setProgressMessage("Generating subtitles...");
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -37,25 +56,88 @@ const Transcribe: React.FC = () => {
       setProgressMessage(`Uploading ${videoFile.name}...`);
       const { video_id: videoId } = await axVideoToTranscription(
         videoFile,
-        onUploadProgress
+        selectedModel
       );
       setIsLoading(false);
       if (videoId) {
+        toast({
+          variant: "success",
+          title: "Video uploaded 🥳",
+          description:
+            "Your video is currently being transformed into a masterpiece. Keep an eye on the dashboard—a fresh update is just a page refresh away. 🌟",
+        });
         router.push(`/dashboard`);
       } else {
         alert("Error processing file. Please try again.");
       }
     } catch (error) {
       alert(`Error uploading file: ${error}. Please try again.`);
+      toast({
+        variant: "destructive",
+        title: "Error Uploading file",
+        description: `${error}. Please try again.`,
+      });
     }
   };
 
+  const SelectModel = () => {
+    return (
+      <DropdownMenu>
+        <Label>Select Model</Label>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="flex gap-1 w-max">
+            {selectedModel.charAt(0).toUpperCase() + selectedModel.slice(1)}
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 15 15"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3.13523 6.15803C3.3241 5.95657 3.64052 5.94637 3.84197 6.13523L7.5 9.56464L11.158 6.13523C11.3595 5.94637 11.6759 5.95657 11.8648 6.15803C12.0536 6.35949 12.0434 6.67591 11.842 6.86477L7.84197 10.6148C7.64964 10.7951 7.35036 10.7951 7.15803 10.6148L3.15803 6.86477C2.95657 6.67591 2.94637 6.35949 3.13523 6.15803Z"
+                fill="currentColor"
+                fillRule="evenodd"
+                clipRule="evenodd"
+              ></path>
+            </svg>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56">
+          <DropdownMenuLabel>Select Model</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuRadioGroup
+            value={selectedModel}
+            onValueChange={setSelectedModel}
+          >
+            <DropdownMenuRadioItem value="tiny">Tiny</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="base">Base</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="small">Small</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="medium">Medium</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="large">Large</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="large-v2">
+              Large-V2
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="large-v3">
+              Large-V3
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
   return (
-    <div className="p-4 flex flex-col items-center">
+    <motion.div
+      className="p-4 flex flex-col items-center"
+      initial="hidden"
+      animate="show"
+      variants={variants}
+    >
       <h1 className="text-3xl text-center font-semibold mb-4">
         Transcribe Video
       </h1>
-      <section className="w-auto lg:w-2/5 flex justify-center border p-4 lg:p-24 rounded shadow-md hover:shadow-lg dark:shadow-slate-900 dark:hover:shadow-slate-800">
+      <section className="w-auto flex justify-center border p-4 lg:p-24 rounded shadow-md bg-background hover:shadow-lg dark:shadow-slate-900 dark:hover:shadow-slate-800">
         {isLoading ? (
           <section className="flex flex-col gap-2 items-center">
             <div role="status">
@@ -91,9 +173,12 @@ const Transcribe: React.FC = () => {
               className="file:mr-4 file:py-2 file:px-4
           file:rounded-full file:border-0
           file:text-sm file:font-semibold
-          file:bg-violet-50 file:text-violet-700
-          hover:file:bg-violet-100"
+          file:bg-primary/15 file:text-primary
+          hover:file:bg-primary/30 cursor-pointer"
+              required
             />
+
+            <SelectModel />
 
             <button
               type="submit"
@@ -104,7 +189,7 @@ const Transcribe: React.FC = () => {
           </form>
         )}
       </section>
-    </div>
+    </motion.div>
   );
 };
 

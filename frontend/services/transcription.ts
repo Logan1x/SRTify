@@ -7,7 +7,7 @@ export const axGetTranscription = async (videoId: string) => {
     );
     return response.data;
   } catch (e) {
-    console.log(e);
+    console.error(e);
   }
 };
 
@@ -18,17 +18,18 @@ export const axGetAllTranscriptions = async () => {
     );
     return response.data;
   } catch (e) {
-    console.log(e);
+    console.error(e);
   }
 };
 
 export const axVideoToTranscription = async (
   video: File,
-  onUploadProgressCallback: (progressEvent: ProgressEvent) => void
+  selectedModel: string
 ) => {
   try {
     const formData = new FormData();
     formData.append("video", video);
+    formData.append("model", selectedModel);
 
     const response = await axios.post(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/transcription/`,
@@ -37,12 +38,11 @@ export const axVideoToTranscription = async (
         headers: {
           "Content-Type": "multipart/form-data",
         },
-        onUploadProgress: onUploadProgressCallback,
       }
     );
     return response.data;
   } catch (e) {
-    console.log(e);
+    console.error(e);
   }
 };
 
@@ -59,6 +59,6 @@ export const axUpdateTranscription = async (
     );
     return response.data;
   } catch (e) {
-    console.log(e);
+    console.error(e);
   }
 };

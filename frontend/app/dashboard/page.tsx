@@ -14,9 +14,16 @@ import {
 } from "@/components/ui/table";
 import Link from "next/link";
 
+interface ISubtitle {
+  id: string;
+  title: string;
+  is_ready: boolean;
+  model: string;
+  updated_at: string;
+}
 function Dashboard() {
-  const [subtitles, setSubtitles] = React.useState<string[] | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [subtitles, setSubtitles] = React.useState<ISubtitle[] | null>(null);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   useEffect(() => {
     async function fetchAllSubtitles() {
@@ -29,11 +36,20 @@ function Dashboard() {
   }, []);
 
   const toLocaleString = (isoDateString: string) => {
+    // change to 12 hour format
+
     const date = new Date(isoDateString);
-    return date.toLocaleString();
+    return date.toLocaleString(undefined, {
+      year: "2-digit",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    });
   };
 
-  const Icon = (props) => {
+  const Icon = (props: { state: any }) => {
     const { state } = props;
     return (
       <div className="flex items-center gap-2">
@@ -54,12 +70,12 @@ function Dashboard() {
 
   return (
     <div>
-      <h1 className="text-3xl text-center font-semibold m-4">Dashboard</h1>
+      <h1 className="text-3xl text-center font-semibold m-4 ">Dashboard</h1>
       {isLoading ? (
         <p className="text-center">Fetching data...</p>
       ) : (
         <>
-          <Table className="mb-12">
+          <Table className="mb-12 bg-background">
             <TableCaption>
               A list of your recent video to srt conversions.
             </TableCaption>
@@ -67,6 +83,7 @@ function Dashboard() {
               <TableRow>
                 <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Model</TableHead>
                 <TableHead>Last Updated</TableHead>
               </TableRow>
             </TableHeader>
@@ -91,6 +108,7 @@ function Dashboard() {
                       <Icon state={"Processing"} />
                     )}
                   </TableCell>
+                  <TableCell>{sub?.model || "N/A"}</TableCell>
                   <TableCell>{toLocaleString(sub?.updated_at)}</TableCell>
                 </TableRow>
               ))}

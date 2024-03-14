@@ -1,12 +1,30 @@
-import { Button, buttonVariants } from "@/components/ui/button";
-import { ModeToggle } from "@/components/ui/theme-toggle";
-import Image from "next/image";
+"use client";
+import { buttonVariants } from "@/components/ui/button";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function Home() {
+  const variants = {
+    hidden: { scale: 0.8, rotate: 2, opacity: 0 },
+    show: {
+      scale: 1,
+      rotate: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+        ease: "easeInOut",
+      },
+    },
+  };
+
   return (
-    <main className="flex h-full flex-col items-center justify-center gap-2 p-24">
-      <h1 className="text-5xl font-bold">SRTIFY</h1>
+    <motion.div
+      className="flex h-full flex-col items-center justify-center gap-2 p-24"
+      initial="hidden"
+      animate="show"
+      variants={variants}
+    >
+      <h1 className="text-5xl font-bold bg-background">SRTIFY</h1>
       <p className="text-lg text-center text-slate-500">
         Create SRT files for your videos.
       </p>
@@ -24,6 +42,6 @@ export default function Home() {
           Transcribe
         </Link>
       </div>
-    </main>
+    </motion.div>
   );
 }

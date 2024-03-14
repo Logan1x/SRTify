@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/resizable";
 import Link from "next/link";
 import ReactPlayer from "react-player";
+import { motion } from "framer-motion";
 
 export default function Editor({ params }: { params: { slug: string } }) {
   const { slug } = params;
@@ -24,6 +25,18 @@ export default function Editor({ params }: { params: { slug: string } }) {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [url, setUrl] = useState("");
   const router = useRouter();
+
+  const variants = {
+    hidden: { opacity: 0, scale: 0.6 },
+    show: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        ease: "easeInOut",
+      },
+    },
+  };
 
   useEffect(() => {
     async function fetchSubtitles() {
@@ -78,7 +91,14 @@ export default function Editor({ params }: { params: { slug: string } }) {
   return (
     <>
       {isLoading ? (
-        <p className="text-center">Loading...</p>
+        <motion.p
+          initial="hidden"
+          animate="show"
+          variants={variants}
+          className="text-center"
+        >
+          Loading...
+        </motion.p>
       ) : isProcessing ? (
         <div className="flex flex-col items-center justify-center mt-6">
           <Alert variant={"warn"} className="w-max flex gap-2">
@@ -102,71 +122,77 @@ export default function Editor({ params }: { params: { slug: string } }) {
           </div>
         </div>
       ) : (
-        <ResizablePanelGroup direction="horizontal">
-          <ResizablePanel className="w-3/5">
-            <div className="flex flex-col p-4">
-              <h1 className="text-3xl text-center font-semibold m-4">
-                Edit Subtitles
-              </h1>
-              <form
-                onSubmit={handleSubmit}
-                className="flex flex-col items-center px-4 w-full gap-4"
-              >
-                <textarea
-                  name=""
-                  id=""
-                  value={subtitles || ""}
-                  onChange={(e) => setSubtitles(e.target.value)}
-                  className="w-full h-96 p-4 border-2 border-gray-300 dark:border-0 rounded-md bg-muted"
-                ></textarea>
-                <ButtonGroup>
-                  <Button type="submit">Update Subtitles</Button>
-                  <Button
-                    type="button"
-                    onClick={handleDownload}
-                    variant="outline"
-                  >
-                    Download Subtitles
-                  </Button>
-                </ButtonGroup>
-              </form>
-            </div>
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel className="w-2/5">
-            <div className="flex flex-col  items-center p-4">
-              <h1 className="text-3xl text-center font-semibold m-4">
-                Preview Subtitles
-              </h1>
-              <input type="file" accept="video/*" onChange={handleFileChange} />
-              {url && (
-                <div className="m-4 p-4">
-                  <ReactPlayer
-                    url={url}
-                    controls
-                    config={{
-                      file: {
-                        tracks: [
-                          {
-                            kind: "subtitles",
-                            src: subtitles
-                              ? URL.createObjectURL(
-                                  new Blob([subtitles], { type: "text/vtt" })
-                                )
-                              : "",
-                            srcLang: "hi",
-                            label: "Hindi",
-                            mode: "showing",
-                          },
-                        ],
-                      },
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        <motion.div initial="hidden" animate="show" variants={variants}>
+          <ResizablePanelGroup direction="horizontal">
+            <ResizablePanel className="w-3/5">
+              <div className="flex flex-col p-4">
+                <h1 className="text-3xl text-center font-semibold m-4">
+                  Edit Subtitles
+                </h1>
+                <form
+                  onSubmit={handleSubmit}
+                  className="flex flex-col items-center px-4 w-full gap-4"
+                >
+                  <textarea
+                    name=""
+                    id=""
+                    value={subtitles || ""}
+                    onChange={(e) => setSubtitles(e.target.value)}
+                    className="w-full h-96 p-4 border-2 border-gray-300 dark:border-0 rounded-md bg-muted"
+                  ></textarea>
+                  <ButtonGroup>
+                    <Button type="submit">Update Subtitles</Button>
+                    <Button
+                      type="button"
+                      onClick={handleDownload}
+                      variant="outline"
+                    >
+                      Download Subtitles
+                    </Button>
+                  </ButtonGroup>
+                </form>
+              </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel className="w-2/5">
+              <div className="flex flex-col  items-center p-4">
+                <h1 className="text-3xl text-center font-semibold m-4">
+                  Preview Subtitles
+                </h1>
+                {url && (
+                  <div className="mx-4 mb-4">
+                    <ReactPlayer
+                      url={url}
+                      controls
+                      config={{
+                        file: {
+                          tracks: [
+                            {
+                              kind: "subtitles",
+                              src: subtitles
+                                ? URL.createObjectURL(
+                                    new Blob([subtitles], { type: "text/vtt" })
+                                  )
+                                : "",
+                              srcLang: "hi",
+                              label: "Hindi",
+                              mode: "showing",
+                            },
+                          ],
+                        },
+                      }}
+                    />
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileChange}
+                />
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </motion.div>
       )}
     </>
   );
