@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Response, BackgroundTasks
+from fastapi import FastAPI, File, UploadFile, Response, BackgroundTasks, Form
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from transcriber import transcribe_audio
@@ -16,7 +16,9 @@ app = FastAPI()
 # Define a list of origins that should be permitted to make cross-origin requests
 # You can use "*" to allow all origins
 origins = [
+    "*",
     "http://localhost:3000",  # Adjust this to include the frontend origin
+    "http://localhost:3001",
     "http://localhost:8000",  # Include additional origins as needed
 ]
 
@@ -56,7 +58,7 @@ async def get_transcriptions():
         )
         return videos
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/transcription/{video_id}/")
@@ -65,12 +67,15 @@ async def get_transcription(video_id: str):
         video = supabase.table("videos").select("*").eq("id", video_id).execute()
         return video
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.post("/transcription/")
 async def transcribe_audio_from_video(
-    background_tasks: BackgroundTasks, video: UploadFile = File(...)
+    *,
+    video: UploadFile = File(...),
+    model: str = Form(...),
+    background_tasks: BackgroundTasks,
 ):
     try:
         # Save uploaded video to a temporary file
@@ -91,6 +96,7 @@ async def transcribe_audio_from_video(
                     "is_ready": False,
                     "created_at": datetime.now().isoformat(),
                     "updated_at": datetime.now().isoformat(),
+                    "model": model,
                 }
             )
             .execute()
@@ -102,13 +108,13 @@ async def transcribe_audio_from_video(
 
         # Use the transcribe function
         srt_content = background_tasks.add_task(
-            transcribe_audio, temp_video_path, video_id
+            transcribe_audio, temp_video_path, video_id, model
         )
 
         # Return the SRT file as a response
         return {"video_id": video_id}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.put("/transcription/{video_id}/")
@@ -125,4 +131,4 @@ async def update_transcription(
         )
         return updated_data
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=400, detail=str(e))

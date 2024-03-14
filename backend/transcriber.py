@@ -5,7 +5,7 @@ from config.supabase import supabase
 
 
 def transcribe_audio(path, video_id, model_name="base"):
-    model = whisper.load_model("large")  # Change this to your desired model
+    model = whisper.load_model(model_name)  # Change this to your desired model
     transcribe = model.transcribe(audio=path)
     segments = transcribe["segments"]
     srtContent = ""
