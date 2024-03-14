@@ -10,6 +10,8 @@ Clone the repository and open directory in terminal
 cd frontend
 npm install
 
+npm run dev
+
 ```
 
 Change `env.example.local` to `env.local` and fill the values.
