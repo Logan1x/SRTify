@@ -1,5 +1,6 @@
 uvicorn
 fastapi
-fastapi-multipart #not sure
+python-multipart
 supabase
 python-dotenv
+whisper

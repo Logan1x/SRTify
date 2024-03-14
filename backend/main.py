@@ -2,7 +2,6 @@ from fastapi import FastAPI, File, UploadFile, Response, BackgroundTasks, Form
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from transcriber import transcribe_audio
-from pymongo import MongoClient
 import os
 import subprocess
 from datetime import datetime
